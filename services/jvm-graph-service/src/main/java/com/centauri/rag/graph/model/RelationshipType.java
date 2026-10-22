@@ -1,15 +1,15 @@
 package com.centauri.rag.graph.model;
 
 /**
- * Directional relationship predicates connecting entities in the knowledge graph.
+ * Directional relationship predicates connecting entities in the insurance knowledge graph.
  */
 public enum RelationshipType {
-    CONTAINS,
-    SPECIFIES,
+    CONTAINS_COVERAGE,
+    SUBJECT_TO,
     GOVERNED_BY,
-    QUOTES,
-    SUBMITS,
-    DEVIATES_FROM,
-    AFFECTS,
-    VIOLATES
+    FILED_UNDER,
+    CAUSED_BY,
+    INVOLVES_ASSET,
+    TRIGGERS_EXCLUSION,
+    EVALUATED_AGAINST
 }

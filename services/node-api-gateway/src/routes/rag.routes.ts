@@ -7,24 +7,34 @@ import { authenticateToken, requireRoles } from '../middleware/auth.middleware';
 
 export const ragRouter = Router();
 
-const AnalyzeTenderSchema = z.object({
-  tenderTitle: z.string().min(3),
-  projectCode: z.string().min(2),
-  tenderText: z.string().min(10),
-  seedEntityIds: z.array(z.string()).optional().default(['EQ-C-101', 'CLS-GCC-24.1']),
-  objective: z.string().optional().default('Screen tender deviations and LD risks against safety standards'),
-});
+const AdjudicateClaimSchema = z.object({
+  claimTitle: z.string().optional(),
+  policyNumber: z.string().optional(),
+  claimText: z.string().optional(),
+  // Fallbacks for backwards compatibility
+  tenderTitle: z.string().optional(),
+  projectCode: z.string().optional(),
+  tenderText: z.string().optional(),
+  seedEntityIds: z.array(z.string()).optional().default(['CLM-2026-8801', 'POL-CYBER-PROP-2026-99']),
+  objective: z.string().optional().default('Adjudicate claim coverage, waiting periods, and policy exclusion triggers'),
+}).refine(
+  data => (data.claimText && data.claimText.length >= 10) || (data.tenderText && data.tenderText.length >= 10),
+  { message: 'Either claimText or tenderText must be provided with at least 10 characters' }
+);
 
 ragRouter.post(
   '/analyze',
   authenticateToken,
-  requireRoles(['Engineer', 'ComplianceReviewer', 'Admin']),
+  requireRoles(['ClaimsAdjuster', 'Underwriter', 'ComplianceReviewer', 'Engineer', 'Admin']),
   async (req: Request, res: Response) => {
     try {
-      const parsed = AnalyzeTenderSchema.parse(req.body);
+      const parsed = AdjudicateClaimSchema.parse(req.body);
+      const title = parsed.claimTitle || parsed.tenderTitle || 'Commercial Claim Review';
+      const referenceCode = parsed.policyNumber || parsed.projectCode || 'POL-CYBER-PROP-2026-99';
+      const textToAnalyze = parsed.claimText || parsed.tenderText || '';
 
       // Step 1: Initialize HITL Workflow
-      const workflow = hitlWorkflowService.createWorkflow(parsed.tenderTitle, parsed.projectCode);
+      const workflow = hitlWorkflowService.createWorkflow(title, referenceCode);
 
       // Step 2: Retrieve GraphRAG Knowledge Network from JVM Microservice
       const graphEnrichment = await jvmGraphClient.enrichPromptContext(
@@ -33,8 +43,8 @@ ragRouter.post(
       );
 
       // Step 3: Run AI Workflow via Azure OpenAI / GitHub Models
-      const aiAnalysis = await azureOpenAiService.analyzeTenderWithGraph(
-        parsed.tenderText,
+      const aiAnalysis = await azureOpenAiService.analyzeClaimWithGraph(
+        textToAnalyze,
         graphEnrichment.formattedContext,
         parsed.objective
       );
@@ -63,7 +73,7 @@ ragRouter.post(
 );
 
 ragRouter.get('/graph-query', authenticateToken, async (req: Request, res: Response) => {
-  const originId = (req.query.originId as string) || 'EQ-C-101';
+  const originId = (req.query.originId as string) || 'CLM-2026-8801';
   const depth = parseInt((req.query.maxDepth as string) || '2', 10);
   const result = await jvmGraphClient.traverse(originId, depth);
   res.status(200).json(result);

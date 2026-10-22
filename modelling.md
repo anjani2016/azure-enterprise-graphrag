@@ -1,48 +1,53 @@
-# Domain & Knowledge Graph Modeling Specification
+# Domain & Knowledge Graph Modeling Specification: Enterprise Insurance
 
-## 1. Domain Entities & Taxonomy (EPC Industrial Domain)
+## 1. Domain Entities & Taxonomy (Insurance & Claims Intelligence)
 
 ### Entity Types (Nodes)
-- **`Document`**: Tender specification, vendor submittal, standard code, or contractual addendum.
-  - Properties: `id`, `name`, `documentType` (`TENDER`, `SPECIFICATION`, `VENDOR_SUBMITTAL`, `STANDARD`), `version`, `storageUri`.
-- **`Clause`**: Atomic legal, commercial, or technical clause within a document.
-  - Properties: `id`, `clauseNumber`, `text`, `category` (`LIQUIDATED_DAMAGES`, `BATTERY_LIMIT`, `SAFETY`, `WARRANTY`, `SCOPE`), `riskLevel` (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`).
-- **`Equipment`**: Physical equipment, tag, or plant functional package.
-  - Properties: `id`, `tagNumber`, `name`, `system` (`FEEDSTOCK`, `DIGESTION`, `UPGRADING`, `COMPRESSION`, `BOP`), `designCapacity`, `operatingPressure`.
-- **`Standard`**: Statutory, national, or industry standard code.
-  - Properties: `id`, `code` (`PESO_SMPV`, `ASME_SEC_VIII`, `OISD_179`, `API_618`), `title`, `issuingBody`.
-- **`Vendor`**: OEM or subcontractor bidding or submitting equipment.
-  - Properties: `id`, `name`, `tier`, `country`.
-- **`Deviation`**: Discrepancy between vendor quote/submittal and tender/standard specification.
-  - Properties: `id`, `title`, `description`, `severity` (`ACCEPTED`, `COMMERCIAL_RISK`, `UNACCEPTABLE_TECHNICAL`), `costImpact`.
+- **`Document`**: Policy wording, endorsement schedule, First Notice of Loss (FNOL), adjuster assessment, forensic cybersecurity report, or statutory regulation.
+  - Properties: `id`, `name`, `documentType` (`POLICY_SCHEDULE`, `ENDORSEMENT`, `CLAIM_FNOL`, `ADJUSTER_REPORT`, `FORENSIC_AUDIT`, `REGULATION`), `version`, `storageUri`.
+- **`Policy`**: Master insurance contract issued to an insured commercial entity.
+  - Properties: `id`, `policyNumber`, `policyholder`, `effectiveDate`, `expirationDate`, `aggregateLimit`, `underwriter`.
+- **`Coverage`**: Specific coverage line or insuring agreement.
+  - Properties: `id`, `name`, `category` (`PROPERTY_DAMAGE`, `BUSINESS_INTERRUPTION`, `CYBER_EXTORTION`, `THIRD_PARTY_LIABILITY`, `ERRORS_AND_OMISSIONS`), `limitAmount`, `deductibleAmount`.
+- **`Clause`**: Operational clause, condition, or warranty within a policy.
+  - Properties: `id`, `clauseNumber`, `title`, `text`, `category` (`WAITING_PERIOD`, `CO_INSURANCE`, `DEDUCTIBLE`, `NOTICE_REQUIREMENT`, `SUBROGATION`), `strictness` (`MANDATORY`, `CONDITIONAL`).
+- **`Exclusion`**: Specific legal or peril exclusion negating or restricting coverage.
+  - Properties: `id`, `code`, `title`, `description`, `exclusionCategory` (`CYBER_HYGIENE`, `WAR_HOSTILITIES`, `WEAR_TEAR`, `WATER_SURFACE`, `INTENTIONAL_ACTS`), `severity` (`TOTAL_BAR`, `SUB_LIMIT_TRIGGER`).
+- **`Claim`**: First Notice of Loss or formal loss claim filed by an insured party.
+  - Properties: `id`, `claimNumber`, `incidentDate`, `filedDate`, `claimedAmount`, `status` (`FILED`, `UNDER_ADJUDICATION`, `DISPUTED`, `APPROVED`, `REJECTED`).
+- **`Peril`**: The proximate cause or manifestation of loss.
+  - Properties: `id`, `name`, `perilType` (`RANSOMWARE_ATTACK`, `WINDSTORM`, `FIRE`, `EQUIPMENT_BREAKDOWN`, `DATA_BREACH`).
+- **`InsuredAsset`**: The physical or digital asset subject to risk.
+  - Properties: `id`, `assetName`, `assetType` (`DATACENTER`, `COMMERCIAL_BUILDING`, `FLEET`, `INDUSTRIAL_FACILITY`), `declaredValue`, `location`.
+- **`RegulatoryStandard`**: Statutory insurance regulations and model acts.
+  - Properties: `id`, `code` (`NAIC_MDL_668`, `SOLVENCY_II`, `STATE_INSURANCE_CODE`), `jurisdiction`, `authority`.
 
 ### Relationship Types (Edges)
-- `(Document)-[:CONTAINS]->(Clause)`
-- `(Clause)-[:SPECIFIES]->(Equipment)`
-- `(Clause)-[:GOVERNED_BY]->(Standard)`
-- `(Vendor)-[:QUOTES]->(Equipment)`
-- `(Vendor)-[:SUBMITS]->(Document)`
-- `(Vendor)-[:DEVIATES_FROM]->(Clause)`
-- `(Deviation)-[:AFFECTS]->(Equipment)`
-- `(Deviation)-[:VIOLATES]->(Standard)`
+- `(Policy)-[:CONTAINS_COVERAGE]->(Coverage)`
+- `(Coverage)-[:SUBJECT_TO]->(Exclusion)`
+- `(Coverage)-[:GOVERNED_BY]->(Clause)`
+- `(Claim)-[:FILED_UNDER]->(Policy)`
+- `(Claim)-[:CAUSED_BY]->(Peril)`
+- `(Claim)-[:INVOLVES_ASSET]->(InsuredAsset)`
+- `(Claim)-[:TRIGGERS_EXCLUSION]->(Exclusion)`
+- `(Claim)-[:EVALUATED_AGAINST]->(RegulatoryStandard)`
 
 ---
 
-## 2. GraphRAG Retrieval Mechanics
+## 2. GraphRAG Retrieval Mechanics in Insurance
 
 ```mermaid
 graph LR
-    UserQuery["User Prompt / Tender Query"] --> EmbedQuery["Vector & Keyword Extraction"]
-    EmbedQuery --> VectorMatch["Find Top-K Direct Clauses"]
-    VectorMatch --> SeedNodes["Seed Graph Nodes"]
+    ClaimQuery["Claim FNOL / Policy Adjudication Query"] --> SeedExtraction["Entity Extraction (Policy, Peril, Asset)"]
+    SeedExtraction --> SeedNodes["Seed Graph Nodes"]
     SeedNodes --> MultiHop["Multi-Hop Graph Traversal (JVM Engine)"]
-    MultiHop --> Subgraph["Extract Contextual Subgraph (Equipment + Standards + Deviations)"]
-    Subgraph --> AIContext["Enriched Prompt Context"]
-    AIContext --> LLM["Azure OpenAI / GitHub Models"]
-    LLM --> VerifiedAnswer["Attributed Response & Compliance Report"]
+    MultiHop --> Subgraph["Extract Subgraph (Coverages + Deductibles + Exclusions + Perils)"]
+    Subgraph --> AIContext["Attributed Knowledge Graph Context"]
+    AIContext --> LLM["Azure OpenAI (GPT-4o)"]
+    LLM --> VerifiedDecision["Adjudication Decision & Audit-Ready Coverage Brief"]
 ```
 
-1. **Seed Entity Identification**: Ingestion & semantic search locates primary matching nodes (`Clause`, `Equipment`).
-2. **K-Hop Neighborhood Expansion**: JVM Graph Engine traverses connected relationships up to 2 hops deep to gather related standards, governing rules, and vendor deviations.
+1. **Seed Entity Identification**: Ingestion maps the claim to its policy (`Policy`), claimed peril (`Peril`), and affected property (`InsuredAsset`).
+2. **K-Hop Neighborhood Expansion**: JVM Graph Engine traverses connected relationships up to 2 hops deep to identify relevant coverage lines, applicable waiting periods/deductibles, and potential exclusion triggers.
 3. **Graph Serialization**: Subgraph is formatted as a structured knowledge context block for Azure OpenAI prompt generation.
-4. **Deterministic Attribution**: Responses cite exact entity IDs, document pages, and relationship paths.
+4. **Deterministic Attribution**: Responses cite exact policy clause numbers, exclusion codes, and deductible rules with 100% legal grounding.

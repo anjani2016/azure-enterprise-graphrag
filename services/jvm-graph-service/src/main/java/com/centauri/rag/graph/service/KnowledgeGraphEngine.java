@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * High-performance in-memory Knowledge Graph engine for entity-relationship
+ * High-performance in-memory Knowledge Graph engine for insurance entity-relationship
  * modeling, multi-hop traversal, and GraphRAG prompt enrichment.
  */
 @Service
@@ -26,7 +26,7 @@ public class KnowledgeGraphEngine {
 
     @PostConstruct
     public void initSeedData() {
-        bootstrapEpcKnowledgeGraph();
+        bootstrapInsuranceKnowledgeGraph();
     }
 
     /**
@@ -132,7 +132,7 @@ public class KnowledgeGraphEngine {
 
     private String buildFormattedContext(Set<EntityNode> nodes, Set<RelationshipEdge> edges) {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== KNOWLEDGE GRAPH ATTRIBUTED CONTEXT ===\n");
+        sb.append("=== INSURANCE KNOWLEDGE GRAPH ATTRIBUTED CONTEXT ===\n");
         sb.append("Entities Identified:\n");
         for (EntityNode n : nodes) {
             sb.append(String.format(" - [%s] %s (%s) | Attributes: %s\n",
@@ -143,13 +143,10 @@ public class KnowledgeGraphEngine {
             sb.append(String.format(" - (%s) -[:%s]-> (%s) | %s\n",
                     e.sourceId(), e.type(), e.targetId(), e.properties()));
         }
-        sb.append("=== END KNOWLEDGE GRAPH CONTEXT ===\n");
+        sb.append("=== END INSURANCE KNOWLEDGE GRAPH CONTEXT ===\n");
         return sb.toString();
     }
 
-    /**
-     * Returns graph topology statistics.
-     */
     public Map<String, Object> getStatistics() {
         Map<EntityType, Long> nodeCounts = nodeStore.values().stream()
                 .collect(Collectors.groupingBy(EntityNode::type, Collectors.counting()));
@@ -170,33 +167,47 @@ public class KnowledgeGraphEngine {
         return new ArrayList<>(nodeStore.values());
     }
 
-    private void bootstrapEpcKnowledgeGraph() {
-        log.info("Bootstrapping baseline EPC Engineering Knowledge Graph...");
-        EntityNode tenderDoc = new EntityNode("DOC-TENDER-GAIL-2026", "GAIL CBG Plant Panipat Tender",
-                EntityType.DOCUMENT, Map.of("version", "R1", "pages", 480));
-        EntityNode specCode = new EntityNode("STD-OISD-179", "OISD-179 Safety Requirements in Gas Processing",
-                EntityType.STANDARD, Map.of("authority", "OISD", "status", "MANDATORY"));
-        EntityNode pesoStd = new EntityNode("STD-PESO-SMPV", "PESO Static and Mobile Pressure Vessels Rules",
-                EntityType.STANDARD, Map.of("authority", "PESO", "enacted", "2016"));
-        EntityNode compressor = new EntityNode("EQ-C-101", "Feedstock Biogas Screw Compressor Package",
-                EntityType.EQUIPMENT, Map.of("capacityNm3Hr", 1200, "dischargeBar", 16.5, "system", "COMPRESSION"));
-        EntityNode ldClause = new EntityNode("CLS-GCC-24.1", "Liquidated Damages for Delay (0.5% per week, max 10%)",
-                EntityType.CLAUSE, Map.of("riskLevel", "HIGH", "category", "COMMERCIAL_RISK"));
-        EntityNode vendorA = new EntityNode("VND-KIRLOSKAR", "Kirloskar Pneumatic Company Ltd",
-                EntityType.VENDOR, Map.of("tier", "TIER_1", "country", "India"));
-        EntityNode dev1 = new EntityNode("DEV-001", "Discharge temperature deviation beyond OISD-179 limits",
-                EntityType.DEVIATION, Map.of("severity", "UNACCEPTABLE_TECHNICAL", "clauseRef", "CLS-GCC-24.1"));
+    private void bootstrapInsuranceKnowledgeGraph() {
+        log.info("Bootstrapping baseline Insurance Policy & Claims Knowledge Graph...");
+        loadInsuranceEntities();
+        loadInsuranceEdges();
+        log.info("Insurance knowledge graph loaded: {} nodes, {} edges",
+                nodeStore.size(), outgoingEdges.values().stream().mapToInt(List::size).sum());
+    }
 
-        List.of(tenderDoc, specCode, pesoStd, compressor, ldClause, vendorA, dev1).forEach(this::upsertNode);
+    private void loadInsuranceEntities() {
+        EntityNode policy = new EntityNode("POL-CYBER-PROP-2026-99", "GlobalTech Enterprise Combined Cyber & Property Policy",
+                EntityType.POLICY, Map.of("effectiveDate", "2026-01-01", "aggregateLimitUsd", 10000000, "policyholder", "GlobalTech Solutions Inc"));
+        EntityNode covBI = new EntityNode("COV-BI", "Business Interruption & Contingent Business Interruption",
+                EntityType.COVERAGE, Map.of("limitUsd", 5000000, "waitingPeriodHours", 72, "category", "BUSINESS_INTERRUPTION"));
+        EntityNode covExt = new EntityNode("COV-CYBER-EXT", "Cyber Extortion & Ransom Reimbursement",
+                EntityType.COVERAGE, Map.of("limitUsd", 2000000, "subLimitUsd", 1000000, "category", "CYBER_EXTORTION"));
+        EntityNode waitClause = new EntityNode("CLS-COND-WAIT-72H", "Condition 8.1: 72-Hour Waiting Period on Interruption Losses",
+                EntityType.CLAUSE, Map.of("clauseNumber", "8.1", "strictness", "MANDATORY", "deductibleHours", 72));
+        EntityNode exclCve = new EntityNode("EXCL-UNPATCHED-CVE", "Exclusion 4.2: Critical Known Vulnerability Unpatched > 30 Days",
+                EntityType.EXCLUSION, Map.of("code", "SEC-EX-4.2", "severity", "TOTAL_BAR", "gracePeriodDays", 30));
+        EntityNode assetDc = new EntityNode("ASSET-DC-01", "Virginia Primary Cloud Data Center & Colocation",
+                EntityType.INSURED_ASSET, Map.of("declaredValueUsd", 15000000, "location", "Ashburn, VA"));
+        EntityNode perilRansom = new EntityNode("PERIL-RANSOMWARE", "BlackCat Ransomware Encryption & Operational Disruption",
+                EntityType.PERIL, Map.of("perilClass", "MALICIOUS_CYBER_ATTACK", "initialVector", "Compromised VPN"));
+        EntityNode claim = new EntityNode("CLM-2026-8801", "GlobalTech Datacenter Cyber Lockout Loss Claim",
+                EntityType.CLAIM, Map.of("claimedLossUsd", 3200000, "incidentDate", "2026-03-12", "status", "UNDER_ADJUDICATION"));
+        EntityNode naicStd = new EntityNode("STD-NAIC-MDL-668", "NAIC Insurance Data Security Model Law (Model 668)",
+                EntityType.REGULATORY_STANDARD, Map.of("authority", "NAIC", "enacted", "2022"));
 
-        addEdge(new RelationshipEdge("DOC-TENDER-GAIL-2026", "CLS-GCC-24.1", RelationshipType.CONTAINS, Map.of("page", 42)));
-        addEdge(new RelationshipEdge("CLS-GCC-24.1", "EQ-C-101", RelationshipType.SPECIFIES, Map.of("criticality", "HIGH")));
-        addEdge(new RelationshipEdge("EQ-C-101", "STD-OISD-179", RelationshipType.GOVERNED_BY, Map.of("clause", "Section 4.3")));
-        addEdge(new RelationshipEdge("EQ-C-101", "STD-PESO-SMPV", RelationshipType.GOVERNED_BY, Map.of("rule", "Rule 18")));
-        addEdge(new RelationshipEdge("VND-KIRLOSKAR", "EQ-C-101", RelationshipType.QUOTES, Map.of("quoteRef", "KPCL-2026-Q4")));
-        addEdge(new RelationshipEdge("DEV-001", "EQ-C-101", RelationshipType.AFFECTS, Map.of("costPenaltyInr", 450000)));
-        addEdge(new RelationshipEdge("DEV-001", "STD-OISD-179", RelationshipType.VIOLATES, Map.of("clause", "4.3.2 Max temp 65C")));
+        List.of(policy, covBI, covExt, waitClause, exclCve, assetDc, perilRansom, claim, naicStd)
+                .forEach(this::upsertNode);
+    }
 
-        log.info("Baseline knowledge graph loaded: {} nodes, {} edges", nodeStore.size(), outgoingEdges.values().stream().mapToInt(List::size).sum());
+    private void loadInsuranceEdges() {
+        addEdge(new RelationshipEdge("POL-CYBER-PROP-2026-99", "COV-BI", RelationshipType.CONTAINS_COVERAGE, Map.of("section", "Section II")));
+        addEdge(new RelationshipEdge("POL-CYBER-PROP-2026-99", "COV-CYBER-EXT", RelationshipType.CONTAINS_COVERAGE, Map.of("section", "Section IV")));
+        addEdge(new RelationshipEdge("COV-BI", "CLS-COND-WAIT-72H", RelationshipType.GOVERNED_BY, Map.of("conditionType", "WAITING_PERIOD")));
+        addEdge(new RelationshipEdge("COV-CYBER-EXT", "EXCL-UNPATCHED-CVE", RelationshipType.SUBJECT_TO, Map.of("strictApplication", true)));
+        addEdge(new RelationshipEdge("CLM-2026-8801", "POL-CYBER-PROP-2026-99", RelationshipType.FILED_UNDER, Map.of("claimantNoticeDays", 4)));
+        addEdge(new RelationshipEdge("CLM-2026-8801", "PERIL-RANSOMWARE", RelationshipType.CAUSED_BY, Map.of("forensicStatus", "CONFIRMED")));
+        addEdge(new RelationshipEdge("CLM-2026-8801", "ASSET-DC-01", RelationshipType.INVOLVES_ASSET, Map.of("impactType", "TOTAL_OUTAGE")));
+        addEdge(new RelationshipEdge("CLM-2026-8801", "EXCL-UNPATCHED-CVE", RelationshipType.TRIGGERS_EXCLUSION, Map.of("unpatchedVulnCve", "CVE-2026-2189")));
+        addEdge(new RelationshipEdge("POL-CYBER-PROP-2026-99", "STD-NAIC-MDL-668", RelationshipType.EVALUATED_AGAINST, Map.of("complianceTier", "TIER_1")));
     }
 }

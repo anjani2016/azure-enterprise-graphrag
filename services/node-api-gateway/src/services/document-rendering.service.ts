@@ -45,7 +45,7 @@ export class DocumentRenderingService {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>EPC Compliance Matrix &amp; Deviation Assessment - ${data.reportId}</title>
+  <title>Insurance Claims Adjudication &amp; Coverage Assessment - ${data.reportId}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; background: #f8fafc; }
     .document-card { max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 48px; border: 1px solid #e2e8f0; }
@@ -71,7 +71,7 @@ export class DocumentRenderingService {
   <div class="document-card">
     <div class="header-table">
       <h1 class="brand-title">CENTAURI RESEARCH</h1>
-      <div class="brand-subtitle">Industrial AI Intelligence · EPC Deviation &amp; Compliance Matrix</div>
+      <div class="brand-subtitle">Enterprise Insurance Intelligence · Claims Adjudication &amp; Coverage Assessment</div>
     </div>
 
     <div class="meta-box">
@@ -112,7 +112,7 @@ export class DocumentRenderingService {
       <div>
         <strong>Human-in-the-Loop Signatory:</strong><br>
         ${data.reviewerName}<br>
-        Lead EPC Risk &amp; Bidding Authority
+        Lead Insurance Claims &amp; Underwriting Authority
       </div>
     </div>
   </div>
@@ -135,10 +135,10 @@ export class DocumentRenderingService {
     const streamContent = `BT
 /F1 18 Tf
 50 750 Td
-(CENTAURI RESEARCH - EPC COMPLIANCE MATRIX) Tj
+(CENTAURI RESEARCH - ENTERPRISE INSURANCE COVERAGE BRIEF) Tj
 0 -24 Td
 /F1 12 Tf
-(Tender: ${data.tenderTitle.replace(/[()]/g, '')}) Tj
+(Case: ${data.tenderTitle.replace(/[()]/g, '')}) Tj
 0 -18 Td
 (Project Code: ${data.projectCode} | Ref: ${data.reportId}) Tj
 0 -18 Td
