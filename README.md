@@ -1,7 +1,8 @@
 # Azure Enterprise Insurance GraphRAG Platform
 
 > **Enterprise Insurance Policy Intelligence, Claims Adjudication, Knowledge-Graph Modeling, and Serverless Cloud Architecture**  
-> *Developed by Centauri Research (Alpha Centauri Ventures Inc.)*
+> *Developed by Centauri Research (Alpha Centauri Ventures Inc.)*  
+> **Live Production Ingress:** [https://insrag.centauri-research.com](https://insrag.centauri-research.com) (Deployed on **Azure Container Apps**)
 
 ---
 
@@ -9,18 +10,18 @@
 
 This production-grade platform fulfills all 10 core responsibilities of enterprise cloud, microservices, and AI engineering within an Insurance domain:
 
-| # | Key Responsibility | Implementation in Codebase |
+| # | Key Responsibility | Implementation in Codebase & Production |
 |---|---|---|
-| **1** | **JVM-based services & components** | `services/jvm-graph-service`: Java 21 & Spring Boot 3 microservice exposing REST, graph traversal, and Actuator metrics. |
+| **1** | **JVM-based services & components** | `services/jvm-graph-service`: Java 21 & Spring Boot 3 microservice exposing REST, graph traversal, and Actuator metrics (deployed as internal Container App `app-jvm-graph-dev-juelpg`). |
 | **2** | **Knowledge-Graph & GraphRAG** | `KnowledgeGraphEngine.java`: In-memory property graph modeling insurance entities (`Policy`, `Coverage`, `Clause`, `Exclusion`, `Claim`, `Peril`, `InsuredAsset`, `RegulatoryStandard`) with multi-hop BFS traversal for prompt augmentation. |
 | **3** | **Document-rendering workflows** | `document-rendering.service.ts`: Reliable generation of audit-ready Claims Adjudication & Coverage Assessment Briefs in responsive HTML and RFC-compliant PDF 1.4 binary formats. |
-| **4** | **Node.js backend & microservices** | `services/node-api-gateway`: TypeScript & Node.js 22 Express microservice orchestrating AI, data persistence, and external connectors. |
-| **5** | **Azure Serverless, Blob, KV, Container Apps, Entra ID** | `infra/bicep/serverless.bicep`: Scale-to-zero serverless infrastructure ($0/mo idle cost) on Azure Container Apps, Blob Storage (`raw-documents`, `rendered-reports`), and Key Vault with Managed Identity RBAC. |
+| **4** | **Node.js backend & Interactive UI** | `services/node-api-gateway`: TypeScript & Node.js 22 Express microservice serving both an executive Web UI dashboard (`GET /`) and REST orchestration APIs (`/api/rag`, `/api/hitl`, `/api/docs`). |
+| **5** | **Azure Container Apps Serverless (Production)** | Deployed via `infra/bicep/serverless.bicep` in `canadacentral` (`rg-epc-graphrag-dev`, Environment `cae-epcrag-dev-juelpg`) with scale-to-zero compute ($0/mo idle cost), Azure Blob Storage, Key Vault, and managed TLS custom domain mapping (`insrag.centauri-research.com`). |
 | **6** | **OAuth 2.0 & OpenID Connect (OIDC)** | `auth.middleware.ts`: Microsoft Entra ID JWT verification via JWKS with Role-Based Access Control (`ClaimsAdjuster`, `Underwriter`, `ComplianceReviewer`, `Admin`). |
 | **7** | **ServiceNow, Jira, Microsoft Graph APIs** | Enterprise connector services: `servicenow.service.ts` (incident/claim intake), `jira.service.ts` (investigation tasks), and `microsoft-graph.service.ts` (SharePoint claim files & Teams alerts). |
 | **8** | **Azure OpenAI & Human-in-the-Loop (HITL)** | `azure-openai.service.ts` + `hitl-workflow.service.ts`: Grounded prompt engineering and human claims adjuster approval gates before settlement or reservation-of-rights release. |
-| **9** | **GitHub Actions CI/CD & Branching** | `.github/workflows/ci-cd.yml` & `docs/BRANCHING_STRATEGY.md`: Automated dual-language testing (Maven + Jest), IaC validation, and zero-downtime deployment slots. |
-| **10** | **Secure Engineering & Monitoring** | Helmet, rate-limiting, non-root Docker builds, OpenTelemetry / Application Insights distributed tracing, and health probes (`/health/live`, `/health/ready`). |
+| **9** | **GitHub Actions CI/CD & Branching** | `.github/workflows/ci-cd.yml` & `docs/BRANCHING_STRATEGY.md`: Automated dual-language testing (Maven + Jest), IaC validation, container packaging to GHCR, and ACA revision deployments. |
+| **10** | **Secure Engineering & Monitoring** | Helmet CSP, rate-limiting, non-root Docker builds, OpenTelemetry / Application Insights distributed tracing, and health probes (`/health/live`, `/health/ready`). |
 | **11** | **LLMOps, Hallucination Detection & Observability** | `services/llmops-eval`: Automated evaluation gate with **Arize Phoenix** (OpenInference tracing) and **MLflow** (RAG triad metrics: Groundedness, Hallucination Rate, Context Relevance). |
 
 ---
@@ -29,10 +30,10 @@ This production-grade platform fulfills all 10 core responsibilities of enterpri
 
 ```mermaid
 flowchart TD
-    Client["Claims Adjuster / Underwriter / Web UI"] -->|OAuth 2.0 Bearer Token| NodeGW["Node.js Orchestration Gateway (:3000)<br/>Azure Container Apps"]
+    Client["Claims Adjuster / Underwriter / Web UI<br/>(https://insrag.centauri-research.com)"] -->|OAuth 2.0 / HTTPS TLS 1.3| NodeGW["Node.js Orchestration Gateway (:3000)<br/>Azure Container App: app-node-gateway-dev-juelpg"]
 
-    subgraph "Serverless Microservices on Azure (Scale to Zero)"
-        NodeGW -->|Enrichment & Traversal| JVMGraph["JVM Graph Microservice (:8081)<br/>Java 21 / Spring Boot 3"]
+    subgraph "Serverless Microservices on Azure Container Apps (canadacentral)"
+        NodeGW -->|Internal REST VNet| JVMGraph["JVM Graph Microservice (:8081)<br/>Azure Container App: app-jvm-graph-dev-juelpg"]
         NodeGW -->|Prompt & Completion| AzureOpenAI["Azure OpenAI / GitHub Models<br/>(gpt-4o)"]
         NodeGW -->|Persist FNOL & Rendered Briefs| BlobStore["Azure Blob Storage<br/>(epcragjuelpg)"]
         NodeGW -->|Retrieve Secrets| KeyVault["Azure Key Vault<br/>(kv-epcrag-juelpg)"]
@@ -53,10 +54,15 @@ flowchart TD
 
 ---
 
-## 3. Infrastructure as Code (IaC)
+## 3. Infrastructure as Code (IaC) & Production Deployment
 
-- **Serverless Azure Container Apps ([`infra/bicep/serverless.bicep`](infra/bicep/serverless.bicep)):** Scale-to-zero serverless deployment in `canadacentral` (**$0.00 idle cost**).
-- **Classic App Service Bicep ([`infra/bicep/main.bicep`](infra/bicep/main.bicep)):** App Service Plan and APIM deployment template.
+- **Active Production: Serverless Azure Container Apps ([`infra/bicep/serverless.bicep`](infra/bicep/serverless.bicep)):** 
+  - Deployed in `canadacentral` (`rg-epc-graphrag-dev`).
+  - Managed Environment: `cae-epcrag-dev-juelpg`.
+  - Public Ingress Service: `app-node-gateway-dev-juelpg` mapped to custom domain `insrag.centauri-research.com` with free Azure Managed Certificate and GoDaddy DNS.
+  - Internal Service: `app-jvm-graph-dev-juelpg` on internal VNet port 8081.
+  - Scale-to-zero serverless profile (**$0.00 idle cost**).
+- **Secondary App Service Template ([`infra/bicep/main.bicep`](infra/bicep/main.bicep)):** Optional App Service Plan and APIM deployment template.
 - **Terraform Multi-Cloud ([`infra/terraform/`](infra/terraform/)):** Full declarative Terraform spec (`main.tf`, `variables.tf`, `outputs.tf`).
 
 ---
@@ -92,12 +98,17 @@ docker-compose up --build
 
 ---
 
-## 5. API Usage Examples
+## 5. Live Production Endpoints & API Usage Examples
+
+### Live Production Deployment (Azure Container Apps)
+- **Interactive Web UI Dashboard:** [https://insrag.centauri-research.com](https://insrag.centauri-research.com)
+- **Liveness Health Probe:** [https://insrag.centauri-research.com/health/live](https://insrag.centauri-research.com/health/live)
+- **Readiness & Graph Topology Probe:** [https://insrag.centauri-research.com/health/ready](https://insrag.centauri-research.com/health/ready)
 
 ### 1. Execute Insurance GraphRAG Analysis & Initiate HITL Workflow
 ```bash
-curl -X POST http://localhost:3000/api/rag/analyze \
-  -H "Authorization: Bearer test-valid-jwt" \
+curl -X POST https://insrag.centauri-research.com/api/rag/analyze \
+  -H "Authorization: Bearer <VALID_JWT>" \
   -H "Content-Type: application/json" \
   -d '{
     "claimTitle": "GlobalTech Datacenter Cyber Lockout Claim",

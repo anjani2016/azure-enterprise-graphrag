@@ -4,6 +4,7 @@
 - **Organization:** Centauri Research (Legal Entity: Alpha Centauri Ventures Inc.).
 - **Domain:** Enterprise Commercial Insurance, Multi-Line Policy Underwriting, Automated Claims Adjudication, and Regulatory Compliance.
 - **Mission:** Build a resilient, dual-microservice GraphRAG platform that unifies JVM-based knowledge graph modeling of insurance policies, coverages, exclusions, and claims, Node.js API orchestration, Azure serverless cloud services (Container Apps, Blob Storage, Key Vault, Entra ID), enterprise integrations (ServiceNow, Jira, Microsoft Graph), and human-in-the-loop (HITL) claim-adjudication workflows.
+- **Production Deployment:** Live on **Azure Container Apps** in `canadacentral` (`rg-epc-graphrag-dev`, Environment `cae-epcrag-dev-juelpg`). Public custom domain: `https://insrag.centauri-research.com` serving both an interactive web dashboard and backend orchestration APIs.
 
 ---
 
