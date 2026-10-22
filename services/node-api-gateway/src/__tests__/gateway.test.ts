@@ -154,4 +154,42 @@ describe('Azure Enterprise GraphRAG Gateway Test Suite', () => {
     expect(res.body.finalVerdict.coverageDecision).toBe('RESERVATION_OF_RIGHTS');
     expect(res.body.finalVerdict.financialDeductibleHours).toBe(72);
   });
+
+  it('GET /api/chat/policies should return catalog of mock insurance policies', async () => {
+    const res = await request(app).get('/api/chat/policies');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.policies.length).toBeGreaterThanOrEqual(3);
+    expect(res.body.policies[0].policyNumber).toBe('POL-CYBER-PROP-2026-99');
+  });
+
+  it('POST /api/chat/query should evaluate question and return grounded GraphRAG answer', async () => {
+    const res = await request(app)
+      .post('/api/chat/query')
+      .send({
+        policyId: 'POL-CYBER-PROP-2026-99',
+        question: 'Is ransomware covered if our VPN had an unpatched vulnerability?',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.verdict).toBe('RESERVATION_OF_RIGHTS');
+    expect(res.body.citedExclusions.length).toBeGreaterThan(0);
+    expect(res.body.traversalPath.length).toBeGreaterThan(0);
+  });
+
+  it('POST /api/chat/upload should allow uploading custom mock insurance policy', async () => {
+    const res = await request(app)
+      .post('/api/chat/upload')
+      .send({
+        policyNumber: 'POL-TEST-UPLOAD-2026',
+        policyholder: 'Test Logistics Corp',
+        aggregateLimitUsd: 12000000,
+        deductibleUsd: 50000,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.policy.policyNumber).toBe('POL-TEST-UPLOAD-2026');
+  });
 });

@@ -9,6 +9,7 @@ import { documentRouter } from './routes/document.routes';
 import { integrationsRouter } from './routes/integrations.routes';
 import { mcpRouter } from './routes/mcp.routes';
 import { a2aRouter } from './routes/a2a.routes';
+import { chatRouter } from './routes/chat.routes';
 import { renderDashboardHtml } from './services/dashboard.service';
 
 export function createApp(): Application {
@@ -58,6 +59,7 @@ export function createApp(): Application {
 
   // Route Mounts
   app.use('/health', healthRouter);
+  app.use('/api/chat', chatRouter);
   app.use('/api/rag', ragRouter);
   app.use('/api/hitl/workflows', hitlRouter);
   app.use('/api/docs', documentRouter);
