@@ -142,12 +142,24 @@ jobs:
   deploy-azure:
     name: Deploy to Azure Container Apps
     needs: [build-and-push-images]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.AZURE_CLIENT_ID != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check Azure Credentials
+        run: |
+          if [ -z "$AZURE_CLIENT_ID" ]; then
+            echo "Notice: Azure credentials (AZURE_CLIENT_ID) are not configured in GitHub Secrets. Skipping Azure deployment."
+            echo "DEPLOY_ENABLED=false" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_ENABLED=true" >> $GITHUB_ENV
+          fi
+
       - name: Azure OIDC Login
+        if: env.DEPLOY_ENABLED == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -155,9 +167,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Downcase Repository Name for Image Tags
+        if: env.DEPLOY_ENABLED == 'true'
         run: echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
       - name: Deploy Serverless Infrastructure (Bicep)
+        if: env.DEPLOY_ENABLED == 'true'
         uses: azure/arm-deploy@v2
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
