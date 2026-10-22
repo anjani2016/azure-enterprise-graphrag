@@ -21,6 +21,7 @@ This production-grade platform fulfills all 10 core responsibilities of enterpri
 | **8** | **Azure OpenAI & Human-in-the-Loop (HITL)** | `azure-openai.service.ts` + `hitl-workflow.service.ts`: Grounded prompt engineering and human claims adjuster approval gates before settlement or reservation-of-rights release. |
 | **9** | **GitHub Actions CI/CD & Branching** | `.github/workflows/ci-cd.yml` & `docs/BRANCHING_STRATEGY.md`: Automated dual-language testing (Maven + Jest), IaC validation, and zero-downtime deployment slots. |
 | **10** | **Secure Engineering & Monitoring** | Helmet, rate-limiting, non-root Docker builds, OpenTelemetry / Application Insights distributed tracing, and health probes (`/health/live`, `/health/ready`). |
+| **11** | **LLMOps, Hallucination Detection & Observability** | `services/llmops-eval`: Automated evaluation gate with **Arize Phoenix** (OpenInference tracing) and **MLflow** (RAG triad metrics: Groundedness, Hallucination Rate, Context Relevance). |
 
 ---
 

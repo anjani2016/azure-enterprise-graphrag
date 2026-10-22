@@ -1,4 +1,4 @@
-name: Azure Enterprise GraphRAG CI/CD
+name: Azure Enterprise Insurance GraphRAG CI/CD
 
 on:
   push:
@@ -53,19 +53,56 @@ jobs:
         working-directory: services/node-api-gateway
         run: npm test
 
-  validate-azure-bicep:
-    name: Validate Azure Infrastructure as Code (Bicep)
+  llmops-eval-gate:
+    name: Arize Phoenix & MLflow Hallucination & Groundedness Gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and Validate Bicep Template
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: services/llmops-eval/requirements.txt
+
+      - name: Install LLMOps Dependencies
         run: |
+          python -m pip install --upgrade pip
+          pip install -r services/llmops-eval/requirements.txt
+
+      - name: Run Arize Phoenix & MLflow Benchmark Evals
+        working-directory: services/llmops-eval
+        env:
+          MLFLOW_TRACKING_URI: "sqlite:///mlflow.db"
+          EVAL_GROUNDEDNESS_THRESHOLD: "0.80"
+          EVAL_MAX_HALLUCINATION_RATE: "0.10"
+        run: |
+          python -m pytest test_eval.py
+          python run_eval.py
+
+      - name: Upload MLflow Evaluation Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-eval-db
+          path: services/llmops-eval/mlflow.db
+          retention-days: 7
+
+  validate-azure-iac:
+    name: Validate Azure Infrastructure as Code (Bicep & Terraform)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Serverless Bicep Template
+        run: |
+          az bicep build --file infra/bicep/serverless.bicep
           az bicep build --file infra/bicep/main.bicep
 
   deploy-azure:
-    name: Deploy to Azure App Service (Staging Slot & Swap)
-    needs: [test-jvm-service, test-node-gateway, validate-azure-bicep]
+    name: Deploy to Azure Container Apps & App Service
+    needs: [test-jvm-service, test-node-gateway, llmops-eval-gate, validate-azure-iac]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -78,29 +115,10 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Infrastructure (Bicep)
+      - name: Deploy Serverless Infrastructure (Bicep)
         uses: azure/arm-deploy@v3
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          template: infra/bicep/main.bicep
-          parameters: infra/bicep/parameters.json
-
-      - name: Deploy Node.js Gateway to Staging Slot
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ secrets.AZURE_APP_NAME_NODE }}
-          slot-name: 'staging'
-          package: services/node-api-gateway
-
-      - name: Verify Staging Health Probe
-        run: |
-          curl --fail https://${{ secrets.AZURE_APP_NAME_NODE }}-staging.azurewebsites.net/health/ready || exit 1
-
-      - name: Swap Staging Slot to Production
-        run: |
-          az webapp deployment slot swap \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name ${{ secrets.AZURE_APP_NAME_NODE }} \
-            --slot staging \
-            --target-slot production
+          template: infra/bicep/serverless.bicep
+          parameters: infra/bicep/serverless.parameters.json
