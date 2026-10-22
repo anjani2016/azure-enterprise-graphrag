@@ -93,27 +93,33 @@ export class JvmGraphClient {
       originNodeId: originId,
       maxDepth,
       visitedNodes: [
-        { id: originId, name: 'Biogas Compressor Package', type: 'EQUIPMENT', properties: { capacity: 1200 } },
-        { id: 'STD-OISD-179', name: 'OISD-179 Safety Code', type: 'STANDARD', properties: { status: 'MANDATORY' } },
-        { id: 'DEV-001', name: 'Discharge Temp Deviation', type: 'DEVIATION', properties: { severity: 'CRITICAL' } },
+        { id: originId, name: 'GlobalTech Ransomware Incident', type: 'CLAIM', properties: { claimedLossUsd: 3200000 } },
+        { id: 'POL-CYBER-PROP-2026-99', name: 'Combined Cyber & Property Policy', type: 'POLICY', properties: { limitUsd: 10000000 } },
+        { id: 'EXCL-UNPATCHED-CVE', name: 'Exclusion 4.2: Known Vulnerability Unpatched > 30 Days', type: 'EXCLUSION', properties: { severity: 'TOTAL_BAR' } },
+        { id: 'COV-BI', name: 'Business Interruption Coverage', type: 'COVERAGE', properties: { limitUsd: 5000000 } },
+        { id: 'CLS-COND-WAIT-72H', name: 'Condition 8.1: 72-Hour Waiting Period Deductible', type: 'CLAUSE', properties: { deductibleHours: 72 } },
       ],
       visitedEdges: [
-        { sourceId: originId, targetId: 'STD-OISD-179', type: 'GOVERNED_BY', properties: { clause: '4.3' } },
-        { sourceId: 'DEV-001', targetId: originId, type: 'AFFECTS', properties: { costPenaltyInr: 450000 } },
+        { sourceId: originId, targetId: 'POL-CYBER-PROP-2026-99', type: 'FILED_UNDER', properties: {} },
+        { sourceId: originId, targetId: 'EXCL-UNPATCHED-CVE', type: 'TRIGGERS_EXCLUSION', properties: { cve: 'CVE-2026-2189' } },
+        { sourceId: 'POL-CYBER-PROP-2026-99', targetId: 'COV-BI', type: 'CONTAINS_COVERAGE', properties: {} },
+        { sourceId: 'COV-BI', targetId: 'CLS-COND-WAIT-72H', type: 'GOVERNED_BY', properties: {} },
       ],
     };
   }
 
   private mockEnrichment(seedIds: string[], query: string): GraphEnrichmentResponse {
-    const sub = this.mockTraversal(seedIds[0] || 'EQ-C-101', 2);
-    const formatted = `=== KNOWLEDGE GRAPH ATTRIBUTED CONTEXT ===
-- [EQUIPMENT] Biogas Compressor Package (EQ-C-101)
-- [STANDARD] OISD-179 Safety Code (STD-OISD-179)
-- [DEVIATION] Discharge Temp Deviation (DEV-001)
+    const sub = this.mockTraversal(seedIds[0] || 'CLM-2026-8801', 2);
+    const formatted = `=== INSURANCE KNOWLEDGE GRAPH ATTRIBUTED CONTEXT ===
+- [POLICY] GlobalTech Enterprise Combined Policy (POL-CYBER-PROP-2026-99)
+- [COVERAGE] Business Interruption (COV-BI)
+- [EXCLUSION] Critical Known Vulnerability Unpatched > 30 Days (EXCL-UNPATCHED-CVE)
+- [CLAUSE] Condition 8.1: 72-Hour Waiting Period Deductible (CLS-COND-WAIT-72H)
 Graph Edges:
-- (EQ-C-101) -[:GOVERNED_BY]-> (STD-OISD-179)
-- (DEV-001) -[:AFFECTS]-> (EQ-C-101)
-=== END KNOWLEDGE GRAPH CONTEXT ===`;
+- (POL-CYBER-PROP-2026-99) -[:CONTAINS_COVERAGE]-> (COV-BI)
+- (COV-BI) -[:GOVERNED_BY]-> (CLS-COND-WAIT-72H)
+- (CLM-2026-8801) -[:TRIGGERS_EXCLUSION]-> (EXCL-UNPATCHED-CVE)
+=== END INSURANCE KNOWLEDGE GRAPH CONTEXT ===`;
 
     return {
       query,

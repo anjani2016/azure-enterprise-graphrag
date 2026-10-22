@@ -7,6 +7,8 @@ import { ragRouter } from './routes/rag.routes';
 import { hitlRouter } from './routes/hitl.routes';
 import { documentRouter } from './routes/document.routes';
 import { integrationsRouter } from './routes/integrations.routes';
+import { mcpRouter } from './routes/mcp.routes';
+import { a2aRouter } from './routes/a2a.routes';
 
 export function createApp(): Application {
   const app = express();
@@ -37,6 +39,8 @@ export function createApp(): Application {
   app.use('/api/hitl/workflows', hitlRouter);
   app.use('/api/docs', documentRouter);
   app.use('/api/integrations', integrationsRouter);
+  app.use('/api/mcp', mcpRouter);
+  app.use('/api/agents', a2aRouter);
 
   // Global Error Handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

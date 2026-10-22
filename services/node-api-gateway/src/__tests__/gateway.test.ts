@@ -112,4 +112,38 @@ describe('Azure Enterprise GraphRAG Gateway Test Suite', () => {
     expect(res.status).toBe(201);
     expect(res.body.issue.key).toBeDefined();
   });
+
+  it('POST /api/mcp should handle standard Model Context Protocol initialize & tools/list', async () => {
+    const initRes = await request(app)
+      .post('/api/mcp')
+      .send({ jsonrpc: '2.0', id: 1, method: 'initialize' });
+
+    expect(initRes.status).toBe(200);
+    expect(initRes.body.result.serverInfo.name).toBe('azure-insurance-graphrag-mcp');
+    expect(initRes.body.result.protocolVersion).toBe('2024-11-05');
+
+    const toolsRes = await request(app)
+      .post('/api/mcp')
+      .send({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
+
+    expect(toolsRes.status).toBe(200);
+    expect(toolsRes.body.result.tools.length).toBeGreaterThanOrEqual(3);
+    expect(toolsRes.body.result.tools.map((t: any) => t.name)).toContain('query_policy_graph_cypher');
+  });
+
+  it('POST /api/agents/collaborate should execute A2A multi-agent adjudication pipeline', async () => {
+    const res = await request(app)
+      .post('/api/agents/collaborate')
+      .set('Authorization', 'Bearer test-valid-jwt')
+      .send({
+        claimText: 'Insured experienced severe ransomware breach with 5 days downtime due to unpatched VPN vulnerability.',
+        policyNumber: 'POL-CYBER-PROP-2026-99',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.sessionCorrelationId).toBeDefined();
+    expect(res.body.messages.length).toBe(3);
+    expect(res.body.finalVerdict.coverageDecision).toBe('RESERVATION_OF_RIGHTS');
+    expect(res.body.finalVerdict.financialDeductibleHours).toBe(72);
+  });
 });
