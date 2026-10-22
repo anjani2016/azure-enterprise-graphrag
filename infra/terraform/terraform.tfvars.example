@@ -1,0 +1,5 @@
+environment         = "prod"
+location            = "canadacentral"
+resource_group_name = "rg-epc-graphrag-prod"
+entra_tenant_id     = "your-azure-entra-tenant-id"
+enable_apim         = true
