@@ -9,12 +9,24 @@ import { documentRouter } from './routes/document.routes';
 import { integrationsRouter } from './routes/integrations.routes';
 import { mcpRouter } from './routes/mcp.routes';
 import { a2aRouter } from './routes/a2a.routes';
+import { renderDashboardHtml } from './services/dashboard.service';
 
 export function createApp(): Application {
   const app = express();
 
-  // Security Headers
-  app.use(helmet());
+  // Security Headers with CSP allowing inline dashboard scripts and styles
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:'],
+        },
+      },
+    })
+  );
 
   // CORS Policy
   app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] }));
@@ -32,6 +44,17 @@ export function createApp(): Application {
   // Body Parsing
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Interactive Web UI Dashboard
+  app.get('/', (_req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(renderDashboardHtml());
+  });
+
+  app.get('/dashboard', (_req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(renderDashboardHtml());
+  });
 
   // Route Mounts
   app.use('/health', healthRouter);

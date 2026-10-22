@@ -4,6 +4,14 @@ import { createApp } from '../app';
 const app = createApp();
 
 describe('Azure Enterprise GraphRAG Gateway Test Suite', () => {
+  it('GET / should return 200 and render the interactive web dashboard HTML', async () => {
+    const res = await request(app).get('/');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.text).toContain('Centauri Research');
+    expect(res.text).toContain('Insurance Policy &amp; Claims GraphRAG Platform');
+  });
+
   it('GET /health/live should return 200 UP', async () => {
     const res = await request(app).get('/health/live');
     expect(res.status).toBe(200);
