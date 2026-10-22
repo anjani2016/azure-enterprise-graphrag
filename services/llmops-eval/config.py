@@ -10,7 +10,7 @@ from dataclasses import dataclass
 class LLMOpsConfig:
     experiment_name: str = os.getenv("MLFLOW_EXPERIMENT_NAME", "azure-insurance-graphrag-eval")
     mlflow_tracking_uri: str = os.getenv("MLFLOW_TRACKING_URI", "https://mlflow.centauri-research.com")
-    phoenix_collector_endpoint: str = os.getenv("PHOENIX_COLLECTOR_ENDPOINT", "https://monitor.centauri-research.com/v1/traces")
+    phoenix_collector_endpoint: str = os.getenv("PHOENIX_COLLECTOR_ENDPOINT", "https://arize.centauri-research.com/v1/traces")
     phoenix_project_name: str = os.getenv("PHOENIX_PROJECT_NAME", "azure-insurance-graphrag")
     groundedness_threshold: float = float(os.getenv("EVAL_GROUNDEDNESS_THRESHOLD", "0.80"))
     max_hallucination_rate: float = float(os.getenv("EVAL_MAX_HALLUCINATION_RATE", "0.10"))
