@@ -4,17 +4,32 @@ Calculates Groundedness, Context Relevance, and Hallucination metrics for Insura
 """
 
 from typing import List, Dict, Any
-from pydantic import BaseModel, Field
 
-class EvaluationResult(BaseModel):
-    claim_id: str
-    groundedness_score: float = Field(ge=0.0, le=1.0)
-    context_relevance_score: float = Field(ge=0.0, le=1.0)
-    answer_relevance_score: float = Field(ge=0.0, le=1.0)
-    is_hallucinated: bool
-    cited_entities: List[str]
-    missing_citations: List[str]
-    verdict: str
+try:
+    from pydantic import BaseModel, Field
+
+    class EvaluationResult(BaseModel):
+        claim_id: str
+        groundedness_score: float = Field(ge=0.0, le=1.0)
+        context_relevance_score: float = Field(ge=0.0, le=1.0)
+        answer_relevance_score: float = Field(ge=0.0, le=1.0)
+        is_hallucinated: bool
+        cited_entities: List[str]
+        missing_citations: List[str]
+        verdict: str
+except ImportError:
+    from dataclasses import dataclass
+
+    @dataclass
+    class EvaluationResult:
+        claim_id: str
+        groundedness_score: float
+        context_relevance_score: float
+        answer_relevance_score: float
+        is_hallucinated: bool
+        cited_entities: List[str]
+        missing_citations: List[str]
+        verdict: str
 
 class GraphRAGEvaluator:
     """Evaluates Insurance GraphRAG prompt responses against retrieved knowledge graph facts."""

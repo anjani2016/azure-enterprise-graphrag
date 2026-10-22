@@ -1,0 +1,11 @@
+{
+  "name": "azure-enterprise-graphrag-root",
+  "version": "1.0.0",
+  "description": "Azure Enterprise Insurance GraphRAG Monorepo",
+  "private": true,
+  "scripts": {
+    "lint": "bash scripts/lint.sh",
+    "test": "bash scripts/test.sh",
+    "check": "bash scripts/lint.sh && bash scripts/test.sh"
+  }
+}
