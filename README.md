@@ -19,8 +19,16 @@ This production-grade platform fulfills all 10 core responsibilities of modern e
 | **6** | **OAuth 2.0 & OpenID Connect (OIDC)** | `auth.middleware.ts`: Microsoft Entra ID JWT verification via JWKS with Role-Based Access Control (`Engineer`, `ComplianceReviewer`, `Admin`). |
 | **7** | **ServiceNow, Jira, Microsoft Graph APIs** | Enterprise connector services: `servicenow.service.ts` (incidents), `jira.service.ts` (issues), and `microsoft-graph.service.ts` (SharePoint docs & Teams cards). |
 | **8** | **Azure OpenAI & Human-in-the-Loop (HITL)** | `azure-openai.service.ts` + `hitl-workflow.service.ts`: Grounded prompt engineering and human engineering approval gates before release. |
-| **9** | **GitHub Actions CI/CD & Branching** | `.github/workflows/ci-cd.yml` & `BRANCHING_STRATEGY.md`: Automated dual-language testing, Bicep linting, and zero-downtime staging slot swaps. |
+| **9** | **GitHub Actions CI/CD & Branching** | `.github/workflows/ci-cd.yml` & `BRANCHING_STRATEGY.md`: Automated dual-language testing, Terraform/Bicep validation, and zero-downtime staging slot swaps. |
 | **10** | **Secure Engineering & Monitoring** | Helmet, rate-limiting, non-root Docker builds, OpenTelemetry / Application Insights distributed tracing, and health probes (`/health/live`, `/health/ready`). |
+
+---
+
+## 2. Infrastructure as Code (IaC): Terraform & Bicep
+
+The platform includes **both** industry-standard IaC implementations:
+- **Terraform ([`infra/terraform/`](infra/terraform/)):** Enterprise multi-cloud IaC provisioning Azure Resource Groups, Linux App Service Plans, Spring Boot 3 & Node.js Web Apps, deployment slots, Blob storage accounts, Key Vault with RBAC, Application Insights, and Azure API Management (`main.tf`, `variables.tf`, `outputs.tf`).
+- **Azure Bicep ([`infra/bicep/`](infra/bicep/)):** Microsoft native declarative templates with parameter files (`main.bicep`, `parameters.json`).
 
 ---
 
