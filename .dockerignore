@@ -1,0 +1,10 @@
+node_modules/
+target/
+.git
+.github
+.DS_Store
+.env
+*.log
+dist/
+build/
+coverage/

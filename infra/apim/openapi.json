@@ -1,0 +1,61 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Centauri Azure Enterprise GraphRAG API",
+    "description": "Production API for EPC tender intelligence, multi-hop knowledge graph retrieval, HITL compliance workflows, and document rendering.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.centauri-research.com/epc-rag"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "EntraIDBearer": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            "scopes": {
+              "api://azure-enterprise-graphrag/Read": "Read access to tender intelligence",
+              "api://azure-enterprise-graphrag/Write": "Write and review tender workflows"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "EntraIDBearer": []
+    }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "summary": "Liveness probe",
+        "responses": { "200": { "description": "Service healthy" } }
+      }
+    },
+    "/api/rag/analyze": {
+      "post": {
+        "summary": "Execute GraphRAG Tender Screening",
+        "responses": { "200": { "description": "Analysis generated and HITL workflow created" } }
+      }
+    },
+    "/api/hitl/workflows/{id}/review": {
+      "post": {
+        "summary": "Submit Human-in-the-Loop Review Decision",
+        "responses": { "200": { "description": "Review status updated" } }
+      }
+    },
+    "/api/docs/render/pdf": {
+      "post": {
+        "summary": "Render and upload EPC Compliance Matrix PDF",
+        "responses": { "200": { "description": "PDF created and persisted to Azure Blob Storage" } }
+      }
+    }
+  }
+}

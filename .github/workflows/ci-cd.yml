@@ -1,0 +1,106 @@
+name: Azure Enterprise GraphRAG CI/CD
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-jvm-service:
+    name: Build & Test JVM Knowledge Graph Microservice
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up OpenJDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compile and Run JVM Unit/Integration Tests
+        working-directory: services/jvm-graph-service
+        run: mvn clean test
+
+  test-node-gateway:
+    name: Build & Test Node.js Gateway Microservice
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: services/node-api-gateway/package.json
+
+      - name: Install Dependencies
+        working-directory: services/node-api-gateway
+        run: npm ci
+
+      - name: TypeScript Compile Check
+        working-directory: services/node-api-gateway
+        run: npx tsc --noEmit
+
+      - name: Run Gateway Test Suite
+        working-directory: services/node-api-gateway
+        run: npm test
+
+  validate-azure-bicep:
+    name: Validate Azure Infrastructure as Code (Bicep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and Validate Bicep Template
+        run: |
+          az bicep build --file infra/bicep/main.bicep
+
+  deploy-azure:
+    name: Deploy to Azure App Service (Staging Slot & Swap)
+    needs: [test-jvm-service, test-node-gateway, validate-azure-bicep]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Infrastructure (Bicep)
+        uses: azure/arm-deploy@v3
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          template: infra/bicep/main.bicep
+          parameters: infra/bicep/parameters.json
+
+      - name: Deploy Node.js Gateway to Staging Slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_APP_NAME_NODE }}
+          slot-name: 'staging'
+          package: services/node-api-gateway
+
+      - name: Verify Staging Health Probe
+        run: |
+          curl --fail https://${{ secrets.AZURE_APP_NAME_NODE }}-staging.azurewebsites.net/health/ready || exit 1
+
+      - name: Swap Staging Slot to Production
+        run: |
+          az webapp deployment slot swap \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ secrets.AZURE_APP_NAME_NODE }} \
+            --slot staging \
+            --target-slot production
