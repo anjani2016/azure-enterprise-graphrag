@@ -213,7 +213,7 @@ function renderHeader(): string {
         </div>
         <div class="status-pill">
           <div class="pulse-dot"></div>
-          <span>Azure Container Apps &amp; Entra ID: Active</span>
+          <span>Azure Container Apps: Active (Public Demo Mode)</span>
         </div>
       </div>
     </header>
@@ -229,8 +229,8 @@ function renderArchitectureCards(): string {
       <div class="card">
         <h3>Node.js API Gateway <span class="tag">Port 3000</span></h3>
         <div class="stat-row"><span class="stat-label">Ingress Host</span><span class="stat-val">insrag.centauri-research.com</span></div>
-        <div class="stat-row"><span class="stat-label">Identity &amp; SSO</span><span class="stat-val">Microsoft Entra ID (RS256 JWT)</span></div>
-        <div class="stat-row"><span class="stat-label">Security Gates</span><span class="stat-val">Role-Based Access (RBAC) + RateLimit</span></div>
+        <div class="stat-row"><span class="stat-label">Access Mode</span><span class="stat-val">Frictionless Demo (No Sign-In Wall)</span></div>
+        <div class="stat-row"><span class="stat-label">Enterprise SSO</span><span class="stat-val">Entra ID / RS256 OAuth 2.0 Ready</span></div>
         <div style="margin-top: 12px; display: flex; gap: 8px;">
           <a href="/health/live" class="btn btn-secondary" target="_blank">Liveness Probe</a>
           <a href="/health/ready" class="btn btn-secondary" target="_blank">Readiness Probe</a>
