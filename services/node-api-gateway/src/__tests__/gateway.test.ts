@@ -160,8 +160,15 @@ describe('Azure Enterprise GraphRAG Gateway Test Suite', () => {
     const res = await request(app).get('/api/chat/policies');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.policies.length).toBeGreaterThanOrEqual(3);
+    expect(res.body.policies.length).toBeGreaterThanOrEqual(6);
     expect(res.body.policies[0].policyNumber).toBe('POL-CYBER-PROP-2026-99');
+  });
+
+  it('GET /api/chat/policies/:policyId/pdf should return policy contract PDF binary', async () => {
+    const res = await request(app).get('/api/chat/policies/POL-CYBER-PROP-2026-99/pdf');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.body.toString('utf-8', 0, 8)).toContain('%PDF-1.4');
   });
 
   it('POST /api/chat/query should evaluate question and return grounded GraphRAG answer', async () => {

@@ -159,6 +159,126 @@ const DEFAULT_POLICIES: MockPolicy[] = [
       'What are our warranty maintenance obligations to preserve coverage?',
     ],
   },
+  {
+    id: 'POL-GL-2026-55',
+    policyNumber: 'POL-GL-2026-55',
+    policyholder: 'Vanguard Construction & Engineering Corp.',
+    effectiveDate: '2026-07-01 to 2027-06-30',
+    aggregateLimitUsd: 10000000,
+    deductibleUsd: 25000,
+    waitingPeriodHours: 0,
+    coverages: [
+      { name: 'Bodily Injury & Property Damage Liability', limitUsd: 2000000, category: 'GENERAL_LIABILITY' },
+      { name: 'Products-Completed Operations Aggregate', limitUsd: 5000000, category: 'COMPLETED_OPS' },
+      { name: 'Personal & Advertising Injury', limitUsd: 2000000, category: 'LIABILITY' },
+    ],
+    exclusions: [
+      {
+        code: 'EXCL-POLLUTION-TOTAL',
+        title: 'Exclusion f: Total Pollution Exclusion',
+        description: 'Complete bar on bodily injury or property damage arising out of discharge, dispersal, or release of pollutants.',
+        severity: 'TOTAL_BAR',
+      },
+      {
+        code: 'EXCL-YOUR-WORK',
+        title: 'Exclusion j: Damage to Your Work',
+        description: 'Excludes property damage to that particular part of real property on which work is being performed.',
+        severity: 'EXCLUSION_TRIGGERED',
+      },
+    ],
+    clauses: [
+      {
+        clauseId: 'CLS-NOTICE-10D',
+        title: 'Condition 2.a: 10-Day Written Occurrence Notice',
+        requirement: 'Insured must provide written notice of any occurrence within 10 business days.',
+      },
+    ],
+    sampleQuestions: [
+      'Is chemical discharge or environmental pollution covered under CGL?',
+      'What is the occurrence limit for jobsite third-party bodily injury?',
+      'Are subcontractor completed operations claims indemnifiable?',
+    ],
+  },
+  {
+    id: 'POL-DO-2026-12',
+    policyNumber: 'POL-DO-2026-12',
+    policyholder: 'Horizon Autonomous Robotics Inc.',
+    effectiveDate: '2026-02-15 to 2027-02-14',
+    aggregateLimitUsd: 20000000,
+    deductibleUsd: 250000,
+    waitingPeriodHours: 0,
+    coverages: [
+      { name: 'Side A - Non-Indemnifiable Director/Officer DIC', limitUsd: 10000000, category: 'EXECUTIVE_RISK' },
+      { name: 'Side B - Corporate Reimbursement', limitUsd: 5000000, category: 'COMPANY_INDEMNITY' },
+      { name: 'Side C - Entity Securities Class Action Defense', limitUsd: 5000000, category: 'SECURITIES_CLAIMS' },
+    ],
+    exclusions: [
+      {
+        code: 'EXCL-FRAUD-JUDICIAL',
+        title: 'Exclusion 3.1: Deliberate Fraud & Illegal Personal Profit',
+        description: 'Bars indemnity for deliberate fraudulent acts only upon final non-appealable judicial adjudication.',
+        severity: 'TOTAL_BAR',
+      },
+      {
+        code: 'EXCL-PRIOR-LITIGATION',
+        title: 'Exclusion 3.2: Prior & Pending Litigation Prior to 2024',
+        description: 'Excludes proceedings or investigations pending prior to February 15, 2024.',
+        severity: 'TOTAL_BAR',
+      },
+    ],
+    clauses: [
+      {
+        clauseId: 'CLS-SEC-NOTICE',
+        title: 'Condition 5.2: 30-Day SEC Formal Order Notice',
+        requirement: 'Insured must report SEC Wells notices or formal orders within 30 days of service.',
+      },
+    ],
+    sampleQuestions: [
+      'Are individual directors protected under Side A if the company becomes insolvent?',
+      'Does the deliberate fraud exclusion apply before a final court ruling?',
+      'What is the deductible for an SEC securities class action claim?',
+    ],
+  },
+  {
+    id: 'POL-CARGO-2026-77',
+    policyNumber: 'POL-CARGO-2026-77',
+    policyholder: 'Pacifica Global Freight Forwarders LLC',
+    effectiveDate: '2026-04-01 to 2027-03-31',
+    aggregateLimitUsd: 12000000,
+    deductibleUsd: 50000,
+    waitingPeriodHours: 12,
+    coverages: [
+      { name: 'Goods in Transit (Multi-Modal Overland & Ocean)', limitUsd: 12000000, category: 'CARGO' },
+      { name: 'Reefer Temperature Breakdown & Spoilage', limitUsd: 4000000, category: 'PERISHABLES' },
+      { name: 'General Average & Salvage Contribution', limitUsd: 12000000, category: 'MARITIME_EXPENSE' },
+    ],
+    exclusions: [
+      {
+        code: 'EXCL-INSUFFICIENT-PACKING',
+        title: 'Exclusion 4.1: Insufficient Packing & Inadequate Stowage',
+        description: 'Loss or shock damage from improper packing or inadequate interior container bracing is excluded.',
+        severity: 'TOTAL_BAR',
+      },
+      {
+        code: 'EXCL-DELAY-DEMURRAGE',
+        title: 'Exclusion 4.4: Market Loss & Demurrage Delay',
+        description: 'Consequential market decline or port storage demurrage caused by transit delay is barred.',
+        severity: 'EXCLUSION_TRIGGERED',
+      },
+    ],
+    clauses: [
+      {
+        clauseId: 'CLS-REEFER-LOGGER',
+        title: 'Warranty T-1: Continuous Digital Temperature Logging',
+        requirement: 'Perishable consignments must carry certified active data loggers throughout transit.',
+      },
+    ],
+    sampleQuestions: [
+      'Is temperature spoilage covered if the reefer unit suffered electrical failure?',
+      'Are demurrage charges or late-delivery penalties indemnifiable?',
+      'What packaging warranties must be satisfied for high-value container shipments?',
+    ],
+  },
 ];
 
 export class PolicyCatalogService {
@@ -205,6 +325,15 @@ export class PolicyCatalogService {
     }
     if (qLower.includes('corrosion') || qLower.includes('wear') || qLower.includes('tear')) {
       return this.buildWearAndTearResponse(policy, question);
+    }
+    if (qLower.includes('pollution') || qLower.includes('chemical') || qLower.includes('environmental') || qLower.includes('discharge')) {
+      return this.buildPollutionExclusionResponse(policy, question);
+    }
+    if (qLower.includes('director') || qLower.includes('officer') || qLower.includes('fraud') || qLower.includes('securities') || qLower.includes('sec') || qLower.includes('side a')) {
+      return this.buildDoFiduciaryResponse(policy, question);
+    }
+    if (qLower.includes('cargo') || qLower.includes('reefer') || qLower.includes('spoilage') || qLower.includes('packing') || qLower.includes('transit') || qLower.includes('demurrage')) {
+      return this.buildCargoTransitResponse(policy, question);
     }
     if (qLower.includes('deductible') || qLower.includes('waiting') || qLower.includes('hours') || qLower.includes('limit')) {
       return this.buildDeductibleResponse(policy, question);
@@ -269,6 +398,67 @@ export class PolicyCatalogService {
         `[Claim Peril: Corrosion] -> (TRIGGERS_EXCLUSION) -> [Exclusion: EXCL-CORROSION]`,
       ],
       renderedHtmlBrief: this.renderBriefHtml(policy, 'EXCLUSION TRIGGERED', 'Barred: Gradual Wear and Tear'),
+    };
+  }
+
+  private buildPollutionExclusionResponse(policy: MockPolicy, question: string): ChatAnswerResponse {
+    return {
+      policyId: policy.id,
+      policyNumber: policy.policyNumber,
+      question,
+      answer: `Environmental discharge and chemical pollution liabilities are **EXCLUDED** under **Exclusion f (EXCL-POLLUTION-TOTAL)**. The policy enforces an absolute pollution bar on any bodily injury, remediation, or cleanup costs resulting from chemical seepage or migration unless dedicated Environmental Impairment Liability (EIL) coverage is bound.`,
+      verdict: 'EXCLUSION_TRIGGERED',
+      verdictLabel: 'Coverage Excluded (Absolute Pollution Bar)',
+      confidenceScore: 0.97,
+      citedClauses: ['Condition 2.a (10-Day Occurrence Notice)'],
+      citedExclusions: ['EXCL-POLLUTION-TOTAL (Exclusion f: Total Environmental Pollution Exclusion)'],
+      traversalPath: [
+        `[Claim: Chemical Discharge] -> (FILED_UNDER) -> [Policy: ${policy.policyNumber}]`,
+        `[Policy] -> (GOVERNED_BY) -> [Exclusion: EXCL-POLLUTION-TOTAL]`,
+        `[Exclusion] -> (ACTION) -> [Absolute Denial of Defense & Indemnity]`,
+      ],
+      renderedHtmlBrief: this.renderBriefHtml(policy, 'EXCLUSION TRIGGERED', 'Total Bar: Environmental Pollution Exclusion'),
+    };
+  }
+
+  private buildDoFiduciaryResponse(policy: MockPolicy, question: string): ChatAnswerResponse {
+    return {
+      policyId: policy.id,
+      policyNumber: policy.policyNumber,
+      question,
+      answer: `Under D&O Policy **${policy.policyNumber}**, individual directors and officers have first-dollar defense coverage under **Side A (DIC)** up to **$10,000,000**. The **Deliberate Fraud Exclusion (EXCL-FRAUD-JUDICIAL)** does *not* apply at the allegation stage; it triggers only after a final, non-appealable judicial adjudication of deliberate dishonesty. Company advancement of defense costs is preserved.`,
+      verdict: 'COVERAGE_AFFIRMED',
+      verdictLabel: 'Defense & Indemnity Affirmed',
+      confidenceScore: 0.95,
+      citedClauses: ['Insuring Clause A (Side A Non-Indemnifiable DIC $10M)', 'Condition 5.2 (30-Day SEC Notice)'],
+      citedExclusions: ['EXCL-FRAUD-JUDICIAL (Exclusion 3.1: Final Judicial Adjudication Standard)'],
+      traversalPath: [
+        `[Claim: Fiduciary/Securities Allegation] -> (FILED_UNDER) -> [Policy: ${policy.policyNumber}]`,
+        `[Policy] -> (CONTAINS_COVERAGE) -> [Coverage: Side A Individual DIC ($10M)]`,
+        `[Exclusion: EXCL-FRAUD-JUDICIAL] -> (EVALUATED_AGAINST) -> [Status: Defense Costs Advanced Pending Adjudication]`,
+      ],
+      renderedHtmlBrief: this.renderBriefHtml(policy, 'COVERAGE AFFIRMED', 'Side A Executive Defense Affirmed'),
+    };
+  }
+
+  private buildCargoTransitResponse(policy: MockPolicy, question: string): ChatAnswerResponse {
+    return {
+      policyId: policy.id,
+      policyNumber: policy.policyNumber,
+      question,
+      answer: `Perishable cargo temperature loss is **COVERED** up to **$4,000,000** under Reefer Breakdown coverage, subject to a 12-hour temperature deviation waiting period and verified compliance with **Warranty T-1 (Continuous Digital Temperature Logging)**. However, port demurrage fees or market delay penalties remain barred under **Exclusion 4.4 (EXCL-DELAY-DEMURRAGE)**.`,
+      verdict: 'COVERAGE_AFFIRMED',
+      verdictLabel: 'Cargo Spoilage Covered / Delay Excluded',
+      confidenceScore: 0.92,
+      citedClauses: ['Warranty T-1 (Digital Temperature Datalogger)', 'Clause: 12-Hour Spoilage Waiting Period'],
+      citedExclusions: ['EXCL-DELAY-DEMURRAGE (Exclusion 4.4: Market Delay & Demurrage Bar)'],
+      traversalPath: [
+        `[Cargo Loss Claim] -> (FILED_UNDER) -> [Policy: ${policy.policyNumber}]`,
+        `[Policy] -> (CONTAINS_COVERAGE) -> [Coverage: Reefer Breakdown ($4M Limit)]`,
+        `[Coverage] -> (GOVERNED_BY) -> [Warranty T-1: Verified Temperature Logger Logged]`,
+        `[Sub-Claim: Port Demurrage] -> (TRIGGERS_EXCLUSION) -> [Exclusion 4.4: Market Loss Bar]`,
+      ],
+      renderedHtmlBrief: this.renderBriefHtml(policy, 'COVERAGE AFFIRMED', 'Reefer Spoilage Indemnity Affirmed'),
     };
   }
 
