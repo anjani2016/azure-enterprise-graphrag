@@ -9,7 +9,8 @@ describe('Azure Enterprise GraphRAG Gateway Test Suite', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('text/html');
     expect(res.text).toContain('Centauri Research');
-    expect(res.text).toContain('Insurance Policy &amp; Claims GraphRAG Platform');
+    expect(res.text).toContain('Enterprise GraphRAG');
+    expect(res.text).toContain('Policy Advisor');
   });
 
   it('GET /health/live should return 200 UP', async () => {
